@@ -1274,6 +1274,7 @@ pub extern fn XFlushGC(?*Display, GC) void;
 pub extern fn XCreatePixmap(?*Display, Drawable, c_uint, c_uint, c_uint) Pixmap;
 pub extern fn XCreateBitmapFromData(?*Display, Drawable, [*c]const u8, c_uint, c_uint) Pixmap;
 pub extern fn XCreatePixmapFromBitmapData(?*Display, Drawable, [*c]u8, c_uint, c_uint, c_ulong, c_ulong, c_uint) Pixmap;
+/// XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes)
 pub extern fn XCreateSimpleWindow(?*Display, Window, c_int, c_int, c_uint, c_uint, c_uint, c_ulong, c_ulong) Window;
 pub extern fn XGetSelectionOwner(?*Display, Atom) Window;
 pub extern fn XCreateWindow(?*Display, Window, c_int, c_int, c_uint, c_uint, c_uint, c_int, c_uint, [*c]Visual, c_ulong, [*c]XSetWindowAttributes) Window;
@@ -1486,6 +1487,7 @@ pub extern fn XPlanesOfScreen([*c]Screen) c_int;
 pub extern fn XProtocolRevision(?*Display) c_int;
 pub extern fn XProtocolVersion(?*Display) c_int;
 pub extern fn XPutBackEvent(?*Display, [*c]XEvent) c_int;
+/// XPutImage(display, d, gc, image, src_x, src_y, dest_x, dest_y, width, height)
 pub extern fn XPutImage(?*Display, Drawable, GC, [*c]XImage, c_int, c_int, c_int, c_int, c_uint, c_uint) c_int;
 pub extern fn XQLength(?*Display) c_int;
 pub extern fn XQueryBestCursor(?*Display, Drawable, c_uint, c_uint, [*c]c_uint, [*c]c_uint) c_int;
