@@ -1247,6 +1247,7 @@ pub extern fn XInsertModifiermapEntry([*c]XModifierKeymap, KeyCode, c_int) [*c]X
 pub extern fn XNewModifiermap(c_int) [*c]XModifierKeymap;
 pub extern fn XCreateImage(?*Display, [*c]Visual, c_uint, c_int, c_int, [*c]u8, c_uint, c_uint, c_int, c_int) [*c]XImage;
 pub extern fn XInitImage([*c]XImage) c_int;
+/// XGetImage(display, d, x, y, width, height, plane_mask, format)
 pub extern fn XGetImage(?*Display, Drawable, c_int, c_int, c_uint, c_uint, c_ulong, c_int) [*c]XImage;
 pub extern fn XGetSubImage(?*Display, Drawable, c_int, c_int, c_uint, c_uint, c_ulong, c_int, [*c]XImage, c_int, c_int) [*c]XImage;
 pub extern fn XOpenDisplay([*c]const u8) ?*Display;
