@@ -1,0 +1,3 @@
+https://github.com/astrand/xclip/blob/master/xclip.c
+https://gist.github.com/DaHoC/ee51ed745b663fc56cfd
+https://tronche.com/gui/x/xlib/graphics/XGetImage.html
