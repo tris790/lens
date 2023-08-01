@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const xlib = @import("xlib.zig");
-const libPng = @import("libPng.zig");
+const libPng = @import("png.zig");
 
 const Selection = struct {
     start_x: c_int = 0,
@@ -34,7 +34,18 @@ pub fn main() anyerror!void {
             std.log.info("Was dirty {}\n", .{delta_time});
             isDirty = false;
             lastTime = currentTime;
-            drawImage(app.display, app.window, app.graphic_context, app.screenshot, selection.start_x, selection.start_y, 0, 0, @intCast(c_uint, selection.end_x - selection.start_x), @intCast(c_uint, selection.end_y - selection.start_y));
+            drawImage(
+                app.display,
+                app.window,
+                app.graphic_context,
+                app.screenshot,
+                selection.start_x,
+                selection.start_y,
+                0,
+                0,
+                @as(c_uint, @as(u32, @intCast(selection.end_x - selection.start_x))),
+                @as(c_uint, @as(u32, @intCast(selection.end_y - selection.start_y))),
+            );
         }
 
         _ = xlib.XNextEvent(app.display, &event);
@@ -91,14 +102,14 @@ fn createApp() App {
 
     var root_attributes: xlib.XWindowAttributes = undefined;
     _ = xlib.XGetWindowAttributes(display, root, &root_attributes);
-    var win_width = @intCast(c_uint, root_attributes.width);
-    var win_height = @intCast(c_uint, root_attributes.height);
+    var win_width = @as(c_uint, @intCast(root_attributes.width));
+    var win_height = @as(c_uint, @intCast(root_attributes.height));
 
     var window = xlib.XCreateSimpleWindow(display, root, 0, 0, win_width, win_height, 0, xlib.XBlackPixel(display, screen), xlib.XWhitePixel(display, screen));
 
     var window_type = xlib.XInternAtom(display, "_NET_WM_WINDOW_TYPE", 0);
     var window_value = xlib.XInternAtom(display, "_NET_WM_WINDOW_TYPE_DOCK", 0);
-    _ = xlib.XChangeProperty(display, window, window_type, @as(xlib.Atom, 4), 32, xlib.PropModeReplace, @ptrCast([*c]const u8, &window_value), 1);
+    _ = xlib.XChangeProperty(display, window, window_type, @as(xlib.Atom, 4), 32, xlib.PropModeReplace, @as([*c]const u8, @ptrCast(&window_value)), 1);
 
     const event_flag_mask = xlib.KeyPressMask | xlib.PointerMotionMask | xlib.ButtonPressMask | xlib.ButtonReleaseMask | xlib.StructureNotifyMask;
     _ = xlib.XSelectInput(display, window, event_flag_mask);
@@ -106,11 +117,11 @@ fn createApp() App {
 
     var gc = xlib.XDefaultGC(display, screen);
 
-    var fullscreen_screenshot = xlib.XGetImage(display, root, @intCast(c_int, root_attributes.x), @intCast(c_int, root_attributes.y), @intCast(c_uint, root_attributes.width), @intCast(c_uint, root_attributes.height), xlib.AllPlanes, xlib.ZPixmap);
+    var fullscreen_screenshot = xlib.XGetImage(display, root, @as(c_int, @intCast(root_attributes.x)), @as(c_int, @intCast(root_attributes.y)), @as(c_uint, @intCast(root_attributes.width)), @as(c_uint, @intCast(root_attributes.height)), xlib.AllPlanes, xlib.ZPixmap);
 
     var window_attributes: xlib.XWindowAttributes = undefined;
     _ = xlib.XGetWindowAttributes(display, root, &window_attributes);
-    drawImage(display, window, gc, fullscreen_screenshot, 0, 0, 0, 0, @intCast(c_uint, window_attributes.width), @intCast(c_uint, window_attributes.height));
+    drawImage(display, window, gc, fullscreen_screenshot, 0, 0, 0, 0, @as(c_uint, @intCast(window_attributes.width)), @as(c_uint, @intCast(window_attributes.height)));
     return App{
         .display = display,
         .screen = screen,
@@ -122,8 +133,8 @@ fn createApp() App {
 }
 
 fn onSelectionCompleted(selection: *Selection, app: *App) void {
-    const selection_width = @intCast(c_uint, selection.end_x - selection.start_x);
-    const selection_height = @intCast(c_uint, selection.end_y - selection.start_y);
+    const selection_width = @as(c_uint, @intCast(selection.end_x - selection.start_x));
+    const selection_height = @as(c_uint, @intCast(selection.end_y - selection.start_y));
 
     _ = xlib.XResizeWindow(app.display, app.window, selection_width, selection_height);
     var cropped_screenshot = xlib.XGetImage(app.display, app.root, 0, 0, selection_width, selection_height, xlib.AllPlanes, xlib.ZPixmap);
@@ -153,10 +164,10 @@ fn xImageToPng(ximage: *xlib.XImage) Screenshot {
     var png_info_ptr = libPng.png_create_info_struct(png_write_ptr);
 
     libPng.png_set_write_fn(png_write_ptr, &buffer, pngWriteData, null);
-    libPng.png_set_IHDR(png_write_ptr, png_info_ptr, @intCast(c_uint, ximage.width), @intCast(c_uint, ximage.height), 8, libPng.PNG_COLOR_TYPE_RGB_ALPHA, libPng.PNG_INTERLACE_NONE, libPng.PNG_COMPRESSION_TYPE_BASE, libPng.PNG_FILTER_TYPE_BASE);
+    libPng.png_set_IHDR(png_write_ptr, png_info_ptr, @as(c_uint, @intCast(ximage.width)), @as(c_uint, @intCast(ximage.height)), 8, libPng.PNG_COLOR_TYPE_RGB_ALPHA, libPng.PNG_INTERLACE_NONE, libPng.PNG_COMPRESSION_TYPE_BASE, libPng.PNG_FILTER_TYPE_BASE);
     libPng.png_write_info(png_write_ptr, png_info_ptr);
 
-    var rows: libPng.png_bytep = (std.heap.c_allocator.alloc(libPng.png_byte, @intCast(usize, 4 * ximage.width)) catch {
+    var rows: libPng.png_bytep = (std.heap.c_allocator.alloc(libPng.png_byte, @as(usize, @intCast(4 * ximage.width))) catch {
         unreachable;
     }).ptr;
 
@@ -164,10 +175,10 @@ fn xImageToPng(ximage: *xlib.XImage) Screenshot {
     var x: u32 = 0;
     while (y < ximage.height) : (y += 1) {
         while (x < ximage.width) : (x += 1) {
-            rows[x * 4] = rgba[(y * @intCast(u32, ximage.width) + x) * 4];
-            rows[x * 4 + 1] = rgba[(y * @intCast(u32, ximage.width) + x) * 4 + 1];
-            rows[x * 4 + 2] = rgba[(y * @intCast(u32, ximage.width) + x) * 4 + 2];
-            rows[x * 4 + 3] = rgba[(y * @intCast(u32, ximage.width) + x) * 4 + 3];
+            rows[x * 4] = rgba[(y * @as(u32, @intCast(ximage.width)) + x) * 4];
+            rows[x * 4 + 1] = rgba[(y * @as(u32, @intCast(ximage.width)) + x) * 4 + 1];
+            rows[x * 4 + 2] = rgba[(y * @as(u32, @intCast(ximage.width)) + x) * 4 + 2];
+            rows[x * 4 + 3] = rgba[(y * @as(u32, @intCast(ximage.width)) + x) * 4 + 3];
         }
 
         libPng.png_write_row(png_write_ptr, rows);
@@ -177,21 +188,21 @@ fn xImageToPng(ximage: *xlib.XImage) Screenshot {
 
     return Screenshot{
         .data = buffer.buffer[0..buffer.bufsize],
-        .width = @intCast(u32, ximage.width),
-        .height = @intCast(u32, ximage.height),
+        .width = @as(u32, @intCast(ximage.width)),
+        .height = @as(u32, @intCast(ximage.height)),
     };
 }
 
 fn pngWriteData(png_structp: libPng.png_structp, png_bytep: libPng.png_bytep, length: usize) callconv(.C) void {
-    var p: *LibPngBuffer = @ptrCast(*LibPngBuffer, @alignCast(@alignOf(LibPngBuffer), libPng.png_get_io_ptr(png_structp).?));
-    var nSize: u32 = p.bufsize + @intCast(u32, length);
+    var p: *LibPngBuffer = @as(*LibPngBuffer, @ptrCast(@alignCast(libPng.png_get_io_ptr(png_structp).?)));
+    var nSize: u32 = p.bufsize + @as(u32, @intCast(length));
 
     p.buffer = (std.heap.c_allocator.alloc(libPng.png_byte, nSize) catch {
         unreachable;
     }).ptr;
 
-    @memcpy(p.buffer, png_bytep, length);
-    p.bufsize += @intCast(u32, length);
+    @memcpy(p.buffer[0..length], png_bytep[0..length]);
+    p.bufsize += @as(u32, @intCast(length));
 }
 
 fn copyPngImage(app: *App) void {
@@ -202,7 +213,7 @@ fn copyPngImage(app: *App) void {
 
 fn sendImage(selection_request: *xlib.XSelectionRequestEvent, app: *App) void {
     var png_atom = xlib.XInternAtom(app.display, "image/png", 0);
-    _ = xlib.XChangeProperty(app.display, selection_request.requestor, selection_request.property, png_atom, 8, xlib.PropModeReplace, app.cropped_screenshot.data.ptr, @intCast(c_int, app.cropped_screenshot.data.len));
+    _ = xlib.XChangeProperty(app.display, selection_request.requestor, selection_request.property, png_atom, 8, xlib.PropModeReplace, app.cropped_screenshot.data.ptr, @as(c_int, @intCast(app.cropped_screenshot.data.len)));
 
     var send_event = xlib.XSelectionEvent{
         .type = xlib.SelectionNotify,
@@ -215,5 +226,5 @@ fn sendImage(selection_request: *xlib.XSelectionRequestEvent, app: *App) void {
         .send_event = undefined,
         .display = undefined,
     };
-    _ = xlib.XSendEvent(app.display, selection_request.requestor, 1, xlib.NoEventMask, @ptrCast([*c]xlib.union__XEvent, &send_event));
+    _ = xlib.XSendEvent(app.display, selection_request.requestor, 1, xlib.NoEventMask, @as([*c]xlib.union__XEvent, @ptrCast(&send_event)));
 }
